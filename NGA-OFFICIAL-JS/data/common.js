@@ -3949,7 +3949,6 @@ var __AVATAR_LIST = {
 	,55 : 'a_liino.webp'
 	,56 : 'a_ang.webp'
 	,57 : 'a_si.webp'
-	,58 : 'a_talu.webp'
 	}
 
 commonui.getAvatarMagicInfo =function(buffs){

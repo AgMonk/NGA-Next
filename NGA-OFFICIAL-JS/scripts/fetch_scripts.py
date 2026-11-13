@@ -31,38 +31,64 @@ INDEX_URL  = "https://bbs.nga.cn/"
 UA         = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
               "AppleWebKit/537.36 (KHTML, like Gecko) "
               "Chrome/131.0.0.0 Safari/537.36")
-# 拦截页 JS 写死的 cookie，用来绕过 Error 15
-COOKIES    = [
-    "guestJs=1794555165_6exn4y",
-    "lastpath=0",
-    "ngaPassportUid=guest06af6bd30a8d22",
-]
 
 
-# ---------- 1. 抓首页 ----------
-def fetch_index() -> str:
-    """curl 抓首页到 _raw.html，返回内容（GBK）"""
-    RAW_HTML.parent.mkdir(parents=True, exist_ok=True)
-    tmp = str(RAW_HTML)
-    # 每次加一个 rand 避免缓存
-    url = f"{INDEX_URL}?rand={int(time.time())}"
+def _http_get(url: str, cookie: str = "") -> bytes:
+    """内部 GET 辅助，返回原始 bytes"""
     cmd = [
         "curl", "-sSL", "--max-time", "30",
         "-H", f"User-Agent: {UA}",
         "-H", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "-H", "Accept-Language: zh-CN,zh;q=0.9,en;q=0.8",
         "-H", "Referer: https://bbs.nga.cn/",
-        "-H", f"Cookie: {'; '.join(COOKIES)}",
-        "-o", tmp,
-        url,
+        "-o", "-",
     ]
-    subprocess.run(cmd, check=True)
-    content = Path(tmp).read_bytes()
-    # 尝试 GBK，失败则回退 replace
-    try:
-        return content.decode("gbk")
-    except UnicodeDecodeError:
-        return content.decode("gbk", errors="replace")
+    if cookie:
+        cmd.extend(["-H", f"Cookie: {cookie}"])
+    cmd.append(url)
+    result = subprocess.run(cmd, capture_output=True, check=True)
+    return result.stdout
+
+
+def _detect_guard(html: str) -> bool:
+    """判断是否被拦截（Error 15 访客不能直接访问页）"""
+    return "访客不能直接访问" in html or (
+        html.startswith("<!DOCTYPE") and "guestJs=" in html and "location.replace" in html
+    )
+
+
+def _extract_guard_cookie(html: str) -> str:
+    """从拦截页 JS 中提取 guestJs=xxx_yyy 和 lastpath=0"""
+    parts = []
+    m = re.search(r"guestJs=[a-zA-Z0-9_]+", html)
+    if m:
+        parts.append(m.group(0))
+    m = re.search(r"lastpath=\d+", html)
+    if m:
+        parts.append(m.group(0))
+    return "; ".join(parts)
+
+
+# ---------- 1. 抓首页 ----------
+def fetch_index() -> str:
+    """curl 抓首页到 _raw.html，自动处理 Error 15 拦截页"""
+    RAW_HTML.parent.mkdir(parents=True, exist_ok=True)
+    url = f"{INDEX_URL}?rand={int(time.time())}"
+
+    raw = _http_get(url)
+    html = raw.decode("gbk", errors="replace")
+
+    if _detect_guard(html):
+        cookie = _extract_guard_cookie(html)
+        print(f"      检测到拦截页，重试（cookie: {cookie}）...")
+        raw = _http_get(url, cookie=cookie)
+        html = raw.decode("gbk", errors="replace")
+        # 二次拦截（概率极低）则放弃
+        if _detect_guard(html):
+            raise RuntimeError("两次请求均被 nga.cn 拦截")
+
+    RAW_HTML.write_bytes(raw)
+    return html
 
 
 # ---------- 2. 提取常量 ----------
@@ -145,11 +171,29 @@ def resolve_expr(expr: str, consts: dict, now: int) -> str:
     # 相对路径（/js_xxx 开头但不是 // 协议继承）补域名
     if e.startswith("/") and not e.startswith("//"):
         e = "https://bbs.nga.cn" + e
+    # 统一升级 HTTPS
+    e = e.replace("http://", "https://")
+    # 清理 query 串：只保留 ? 后紧跟纯数字的情况（如 ?120870）
+    # 如果 ? 后是空串或非数字开头，去掉 query；如 "?+5981851" 这种脏值也去掉
+    if "?" in e:
+        path, _, query = e.partition("?")
+        # 只保留纯数字 query
+        if re.fullmatch(r"\d+", query):
+            e = f"{path}?{query}"
+        else:
+            e = path
     return e
 
 
+def is_js_url(url: str) -> bool:
+    """判断 URL 路径部分是否以 .js 结尾（不看 query）"""
+    # 去掉 query 和 #hash
+    base = url.split("?", 1)[0].split("#", 1)[0]
+    return base.lower().endswith(".js")
+
+
 def parse_scripts(body: str, consts: dict) -> dict:
-    """返回 {key: url}，自动过滤 rand 数字项、127.0.0.1、非 http(s)"""
+    """返回 {key: url}，自动过滤 rand 数字项、127.0.0.1、非 http(s)、非 .js"""
     now = int(time.time())
     result: dict[str, str] = {}
     pat = re.compile(r'[,\s]*"?([a-zA-Z_][a-zA-Z0-9_]*)"?\s*:\s*([^,}\n]+)')
@@ -163,6 +207,9 @@ def parse_scripts(body: str, consts: dict) -> dict:
         if "127.0.0.1" in url:
             continue
         if not (url.startswith("http://") or url.startswith("https://")):
+            continue
+        # 只保留 .js 文件（ubbeditor 是 .html，stat 是非 nga js 但扩展名是 .js 会保留）
+        if not is_js_url(url):
             continue
         result[key] = url
     return result
