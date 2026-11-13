@@ -1,17 +1,8 @@
 # AGENTS 协作铁律
 
-## 第一条铁律
+## Commit Message 格式
 
-每个模块使用各自独立的开发分支，最终一起合并为 main 分支。提交 commit 时，以自己模块名（不含 "NGA" 前缀）作为 commit message 前缀。
-
-### 分支命名约定
-
-```
-<模块名小写>  # 开发分支，例如：official-js、bbscode-to-json、bbscode-smiles、web-api、android-jpc
-main          # 主分支，所有模块开发完成后合并至此
-```
-
-### Commit Message 格式
+提交 commit 时，以自己模块名（不含 "NGA" 前缀）作为 commit message 前缀。
 
 ```
 <模块简称>: <描述>

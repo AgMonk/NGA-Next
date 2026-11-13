@@ -192,8 +192,12 @@ def is_js_url(url: str) -> bool:
     return base.lower().endswith(".js")
 
 
+# 这些域名是 nga.cn 的第三方广告/统计供应商，非 nga 官方资源
+EXCLUDED_HOSTS = ("tagtic.cn",)
+
+
 def parse_scripts(body: str, consts: dict) -> dict:
-    """返回 {key: url}，自动过滤 rand 数字项、127.0.0.1、非 http(s)、非 .js"""
+    """返回 {key: url}，自动过滤 rand 数字项、127.0.0.1、非 http(s)、非 .js、第三方广告域"""
     now = int(time.time())
     result: dict[str, str] = {}
     pat = re.compile(r'[,\s]*"?([a-zA-Z_][a-zA-Z0-9_]*)"?\s*:\s*([^,}\n]+)')
@@ -208,8 +212,11 @@ def parse_scripts(body: str, consts: dict) -> dict:
             continue
         if not (url.startswith("http://") or url.startswith("https://")):
             continue
-        # 只保留 .js 文件（ubbeditor 是 .html，stat 是非 nga js 但扩展名是 .js 会保留）
+        # 只保留 .js 文件
         if not is_js_url(url):
+            continue
+        # 过滤第三方广告/统计域名
+        if any(host in url for host in EXCLUDED_HOSTS):
             continue
         result[key] = url
     return result
