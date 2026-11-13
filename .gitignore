@@ -1,0 +1,14 @@
+# 临时抓取产物
+NGA-OFFICIAL-JS/scripts/_raw.html
+NGA-OFFICIAL-JS/scripts/*.part
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/

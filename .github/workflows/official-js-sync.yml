@@ -1,0 +1,55 @@
+name: NGA Official JS Sync
+
+on:
+  schedule:
+    # 每天 UTC 16:00 = 北京时间 0:00
+    - cron: '0 16 * * *'
+  workflow_dispatch:          # 允许手动触发
+
+concurrency:
+  group: official-js-sync
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0      # 需要完整历史来 push + merge
+
+      - name: Verify branch
+        run: |
+          # 如果从 main 触发（workflow_dispatch 默认），切到 official-js
+          BRANCH="${{ github.ref_name }}"
+          if [ "$BRANCH" != "official-js" ]; then
+            echo "当前分支 $BRANCH，切换到 official-js"
+            git fetch origin official-js:official-js || true
+            git checkout -B official-js origin/official-js 2>/dev/null || git checkout -b official-js
+          fi
+          git config user.name "official-js-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run fetch_scripts.py
+        run: |
+          python3 --version
+          python3 NGA-OFFICIAL-JS/scripts/fetch_scripts.py
+
+      - name: Commit & merge to main
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "scripts.json 无变化，跳过 commit / merge"
+            exit 0
+          fi
+          DATE=$(date -u +%Y-%m-%d)
+          git commit -m "official-js: sync $DATE"
+          git push origin HEAD:official-js
+
+          # 合并到 main
+          echo "合并 official-js → main"
+          git checkout main
+          git pull origin main
+          git merge --no-ff official-js -m "official-js: merge sync $DATE"
+          git push origin main
