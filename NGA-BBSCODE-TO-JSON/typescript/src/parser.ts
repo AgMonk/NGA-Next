@@ -18,9 +18,23 @@ import {
 
 const DEFAULT_MAX_DEPTH = 20;
 
-/** 标签正则：匹配开标签或闭标签，按长度优先匹配 */
+/**
+ * 标签正则：匹配开标签或闭标签，按长度优先匹配
+ *
+ * 参数部分 (match[3])：匹配标签名后到 ] 之间的所有字符（最多 200）
+ *   支持的形式：
+ *     [img-1]          →  '-1'   (无等号无空格，直接跟标签名)
+ *     [tid123]         →  '123'
+ *     [tid=123]        →  '=123' (标准等号形式)
+ *     [td width=80]    →  ' width=80' (空格开头)
+ *     [td colspan2]    →  ' colspan2'
+ *     [color]          →  undefined (无参数)
+ *
+ * 注意：参数部分不要求以 '=' 或空格开头，因为官方 JS 中 img/tid 等
+ * 标签支持无等号直接跟数字/符号（如 [img-1]、[tid123]）。
+ */
 const TAG_REGEX = new RegExp(
-  `^\\[(\\/)?(${TAG_NAMES_SORTED.join('|')})(?:([=\\s][^\\]]{0,200}))?\\]`,
+  `^\\[(\\/)?(${TAG_NAMES_SORTED.join('|')})([^\\]]{0,200})?\\]`,
   'i'
 );
 
@@ -199,7 +213,7 @@ function findCloseTag(
   const openAliases = [canonicalName, ...(cfg.aliases ?? [])].map(escape);
 
   const openPattern = new RegExp(
-    `\\[(?:${openAliases.join('|')})(?:[=\\s][^\\]]{0,200})?\\]`,
+    `\\[(?:${openAliases.join('|')})(?:[^\\]]{0,200})?\\]`,
     'gi'
   );
   const closePattern = new RegExp(
@@ -244,7 +258,7 @@ function buildTagNode(
 ) {
   const params = cfg?.paramMode === 'space'
     ? parseSpaceParams(rawParams)
-    : parseTagParams(rawParams);
+    : parseTagParams(canonicalName, rawParams);
 
   let children: BbscodeNode[];
   if (cfg?.rawContent) {
@@ -263,12 +277,35 @@ function buildTagNode(
 }
 
 /**
- * key=value 模式参数解析（默认）
- *   [pid=123,456]           → { value: '123,456' }
- *   [color=red]             → { value: 'red' }
- *   [td width=80 auto]      → { width: '80', auto: 'true' }
+ * 标签名 → 参数解析策略
+ *
+ * 官方 JS 各标签参数形式差异极大，必须按标签名分派：
+ *
+ * | 标签 | 官方正则 | 处理策略 |
+ * |------|---------|---------|
+ * | img | \[img(-?\d{0,3})\] | 参数直接跟标签名，可选负号 |
+ * | tid/pid/... | \[(tid|pid)=?([\d,]+)\] | 等号可选 |
+ * | td/tr/table | 宽度等号可选 + 关键字 | 专用解析 |
+ * | list | \[list(=.)?\] | 等号 + 单字符 |
+ * | 其他 | 各种等号/等号可选 | 通用 key=value |
  */
-function parseTagParams(raw: string | undefined): Record<string, string> {
+
+/** td/tr/table 共用的关键字参数（官方 JS 行 960-964） */
+const TD_WIDTH_RE = /^width=?(auto|\d{0,2})/i;
+const TD_COLSPAN_RE = /^colspan=?(\d{0,2})/i;
+const TD_ROWSPAN_RE = /^rowspan=?(\d{0,2})/i;
+const TD_TOP_RE = /^top(\s|$)/i;
+
+/** 内部链接标签（等号可选，值为数字） */
+const INTERNAL_LINK_TAGS = new Set(['tid', 'pid', 'fid', 'stid', 'uid']);
+
+/**
+ * 标签参数解析（按标签名分派）
+ *
+ * 通用规则：去首尾空白和开头的 '='，有显式 key=value 模式则按 key-value 分
+ * 其他情况整串作为 value。img/td/tr/table 等特殊标签有专门的解析逻辑。
+ */
+function parseTagParams(tagName: string, raw: string | undefined): Record<string, string> {
   const result: Record<string, string> = {};
   if (!raw) return result;
 
@@ -276,6 +313,98 @@ function parseTagParams(raw: string | undefined): Record<string, string> {
   if (s.startsWith('=')) s = s.substring(1);
   if (!s) return result;
 
+  // === img：直接数字或 -数字，官方 \[img(-?\d{0,3})\] ===
+  if (tagName === 'img') {
+    result.value = s;
+    return result;
+  }
+
+  // === 内部链接：等号可选，值为逗号分隔数字 ===
+  if (INTERNAL_LINK_TAGS.has(tagName)) {
+    result.value = s;
+    return result;
+  }
+
+  // === list：官方 \[list(=.)?\]，等号 + 单个字符 ===
+  if (tagName === 'list') {
+    result.value = s;
+    return result;
+  }
+
+  // === table：width 可选等号 ===
+  if (tagName === 'table') {
+    const m = s.match(TD_WIDTH_RE);
+    if (m) {
+      result.width = m[1];
+    } else {
+      result.value = s;
+    }
+    return result;
+  }
+
+  // === tr：th 关键字 ===
+  if (tagName === 'tr') {
+    if (/\bth\b/i.test(s)) {
+      result.th = 'true';
+    } else {
+      result.value = s;
+    }
+    return result;
+  }
+
+  // === td：width/colspan/rowspan 等号可选 + top 关键字 ===
+  if (tagName === 'td') {
+    // 纯数字开头：百分比宽度
+    if (/^\d+(\.\d+)?$/.test(s)) {
+      result.width = s;
+      return result;
+    }
+
+    let rest = s;
+
+    // 提取 width
+    let m = rest.match(TD_WIDTH_RE);
+    if (m) {
+      result.width = m[1];
+      rest = rest.substring(m[0].length).trim();
+    }
+
+    // 提取 colspan
+    m = rest.match(TD_COLSPAN_RE);
+    if (m) {
+      result.colspan = m[1];
+      rest = rest.substring(m[0].length).trim();
+    }
+
+    // 提取 rowspan
+    m = rest.match(TD_ROWSPAN_RE);
+    if (m) {
+      result.rowspan = m[1];
+      rest = rest.substring(m[0].length).trim();
+    }
+
+    // 提取 top（vertical-align）
+    if (TD_TOP_RE.test(rest)) {
+      result.verticalAlign = 'top';
+      rest = rest.replace(/^top(\s|$)/i, '').trim();
+    }
+
+    // 剩余部分
+    if (rest) {
+      // 尝试通用 key=value 拆分
+      if (rest.includes('=')) {
+        const eq = rest.indexOf('=');
+        const key = rest.substring(0, eq).trim();
+        const val = rest.substring(eq + 1).trim();
+        if (key) result[key] = val;
+      } else {
+        result.value = rest;
+      }
+    }
+    return result;
+  }
+
+  // === 通用 key=value 模式（color/size/font/url/iframe/album/flash/code/collapse/align 等） ===
   const hasKeyValue = /(?:[\s,])[a-zA-Z][a-zA-Z0-9]*=/.test(' ' + s);
 
   if (hasKeyValue) {

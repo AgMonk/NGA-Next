@@ -145,9 +145,69 @@ test('骰子不递归内部', '[dice]2d6+3[/dice]', (c) =>
 // ===== 15. 未闭合标签 =====
 test('未闭合标签（当作文本）', '[b]test', (c) => c.length >= 1);
 
-// ===== 16. 参数解析：key=value 模式 =====
-test('td 多参数', '[td width=80 auto]cell[/td]', (c) =>
-  c[0].name === 'td' && c[0].params.width === '80' && c[0].params.auto === 'true'
+// ===== 16. td 参数：width/colspan/rowspan 等号可选 + top 关键字 =====
+test('td width 有等号', '[td width=80]cell[/td]', (c) =>
+  c[0].name === 'td' && c[0].params.width === '80'
+);
+test('td width 无等号（官方支持）', '[td width80]cell[/td]', (c) =>
+  c[0].params.width === '80'
+);
+test('td colspan 有等号', '[td colspan=2]cell[/td]', (c) =>
+  c[0].params.colspan === '2'
+);
+test('td colspan 无等号（官方支持）', '[td colspan2]cell[/td]', (c) =>
+  c[0].params.colspan === '2'
+);
+test('td rowspan + top', '[td rowspan3 top]cell[/td]', (c) =>
+  c[0].params.rowspan === '3' && c[0].params.verticalAlign === 'top'
+);
+
+// ===== 17. img 参数：直接跟数字或 -数字（无等号）=====
+test('img 有参数 [img-1]', '[img-1]url[/img]', (c) =>
+  c[0].name === 'img' && c[0].params.value === '-1'
+);
+test('img 正号参数 [img123]', '[img123]url[/img]', (c) =>
+  c[0].params.value === '123'
+);
+test('img 无参数', '[img]url[/img]', (c) =>
+  c[0].params.value === undefined || Object.keys(c[0].params).length === 0
+);
+
+// ===== 18. 内部链接：等号可选 =====
+test('tid 无等号 [tid123]', '[tid123]标题[/tid]', (c) =>
+  c[0].params.value === '123'
+);
+test('tid 有等号 [tid=123]', '[tid=123]标题[/tid]', (c) =>
+  c[0].params.value === '123'
+);
+test('pid 无等号 [pid123,456]', '[pid123,456]回复[/pid]', (c) =>
+  c[0].params.value === '123,456'
+);
+
+// ===== 19. list 单字符参数 =====
+test('list 有序 [list=1]', '[list=1][*]a[/list]', (c) =>
+  c[0].name === 'list' && c[0].params.value === '1'
+);
+test('list 无参数（无序）', '[list][*]a[/list]', (c) =>
+  c[0].params.value === undefined
+);
+
+// ===== 20. iframe 逗号参数 =====
+test('iframe 有尺寸 [iframe=500,600]', '[iframe=500,600]http://x[/iframe]', (c) =>
+  c[0].name === 'iframe' && c[0].params.value === '500,600'
+);
+
+// ===== 21. color bg 前缀 =====
+test('color 背景色前缀 [color=bgred]', '[color=bgred]text[/color]', (c) =>
+  c[0].name === 'color' && c[0].params.value === 'bgred'
+);
+
+// ===== 22. flash 视频/音频 =====
+test('flash=video', '[flash=video]http://x[/flash]', (c) =>
+  c[0].name === 'flash' && c[0].params.value === 'video'
+);
+test('media=audio', '[media=audio]http://x[/media]', (c) =>
+  c[0].name === 'media' && c[0].params.value === 'audio'
 );
 
 // ===== 结果 =====
