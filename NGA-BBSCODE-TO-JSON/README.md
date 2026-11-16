@@ -8,7 +8,8 @@
 NGA-BBSCODE-TO-JSON/
 ├── README.md                  ← 本文件（模块根目录说明）
 ├── docs/
-│   └── parsing-method.md      ← 解析方法详细文档
+│   ├── parsing-method.md       ← 解析方法详细文档（两阶段 + 递归）
+│   └── tag-reference.md        ← 50+ 标签完整参考（参数/别名/特殊行为）
 │
 ├── typescript/                ← TypeScript 实现
 │   ├── src/
@@ -115,6 +116,10 @@ JSON AST 节点树
 | 内部链接 | `tid` `pid` `fid` `stid` `uid` |
 | 表情 | `s`（数字 / 分组） |
 | 其他 | `dice` `crypt` `h` `lessernuke` `atUser` |
+| 版头/高级布局 | `fixsize` `style` `parentfitwidth` `aligntobottom` `extendtop` |
+| 预处理移除 | `comment` `stripbr` |
+
+> 以上是概览，完整的标签参数、别名、官方值白名单等细节见 [docs/tag-reference.md](docs/tag-reference.md)。
 
 ## 参数解析规则
 
