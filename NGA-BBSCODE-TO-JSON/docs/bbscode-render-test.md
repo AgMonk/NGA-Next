@@ -5,6 +5,49 @@
 
 ---
 
+## APP 端支持情况（实测）
+
+> 以下为 NGA 客户端（APP）实测结果，与网页端存在差异。
+> **标记 ❌ 的用法在 APP 中会原样输出 BBCode 标签，或降级渲染。**
+
+| 用法 | APP 表现 | 结论 |
+|------|---------|------|
+| `[tid=123]` / `[pid=123,5]`（带等号） | 正常超链接 | ✅ |
+| `[tid123]` / `[pid123,5]`（无等号） | 原样输出 BBCode | ❌ |
+| `[fid=4]` / `[stid=100]` / `[uid=123]` | 原样输出 BBCode | ❌ |
+| `[@用户名]` | 纯文本，不可点击 | ❌ |
+| `[url=...]文字[/url]` | 正常超链接 | ✅ |
+| `[url]https://...[/url]`（无参数形式） | 未生成超链接 | ❌ |
+| `[list]` 无序列表 | 正常 | ✅ |
+| `[list=1]` 有序列表 | 渲染为圆点，不是数字 | ❌ |
+| 嵌套 `[list]` | 不缩进，层级被拉平 | ❌ |
+| `[table]` / `[tr]` / `[td]` | 正常渲染 | ✅ |
+| `[td width=120]` 单元格宽度 | 未生效，列宽错乱 | ❌ |
+| `[tr th]` 表头 | 原样输出 BBCode | ❌ |
+| `[table width=600]` | 整个表格原样输出 | ❌ |
+| `[img]url[/img]` | 正常显示 | ✅ |
+| `[img-1]` / `[img123]`（带参数） | 原样输出 BBCode | ❌ |
+| `[flash=video]url[/flash]` | 原样输出 BBCode | ❌ |
+| `[attach]...[/attach]` | 原样输出 BBCode | ❌ |
+| `[collapse]` / `[collapse=标题]` | 正常折叠 | ✅ |
+| `[randomblock]` | 原样输出 BBCode | ❌ |
+| `[code]` / `[code=python]` | 标签被剥离，无代码框与高亮 | ❌ |
+| `[crypt]` | 原样输出 BBCode | ❌ |
+| `[dice]` | 正常掷骰 | ✅ |
+| `[h]` | 降级为加粗文本 | ⚠️ |
+| `[s:1]` / `[s:ac:中文]` | 正常显示表情图 | ✅ |
+| `[b][i][u][del][sup][sub]` | 正常 | ✅ |
+| `[color=...]`（白名单）/ `bg` 前缀 | 正常 | ✅ |
+| `[size=50/150/200]` | 正常 | ✅ |
+| `[align=left/right/center]` | 正常 | ✅ |
+| `[font=...]` | 标签生效，但移动端缺字体时视觉无差异 | ⚠️ |
+| `[media=audio/video]` | 未实测（推测原样输出） | ⚠️ |
+| `[iframe=w,h]` | 未实测（网页端还需域名白名单） | ⚠️ |
+| `[lessernuke]` | 非普通帖子标签，原样输出 | ❌ |
+| `[urlreplace]` | 特殊功能，普通回复原样输出 | ❌ |
+
+---
+
 ## 目录
 
 - [基础样式](#基础样式)
@@ -78,6 +121,7 @@
 
 > 官方白名单 17 种：`simsun` / `simhei` / `Arial` / `Arial Black` / `Book Antiqua` / `Century Gothic` / `Comic Sans MS` / `Courier New` / `Georgia` / `Impact` / `Tahoma` / `Times New Roman` / `Trebuchet MS` / `Script MT Bold` / `Stencil` / `Verdana` / `Lucida Console`
 > 不在白名单的字体名渲染为 `/* bbscode font error */`
+> ⚠️ **APP 实测**：标签本身生效，但移动端通常未安装这些字体，视觉上基本无差异
 
 ```
 [font=simsun]simsun 宋体[/font]
@@ -103,6 +147,8 @@
 
 ### 超链接
 
+> ❌ **APP 实测**：`[url]https://...[/url]` 无参数形式不生成超链接，只有 `[url=...]文字[/url]` 可用
+
 ```
 [url=https://www.nga.cn]NGA 论坛[/url]
 [url]https://www.nga.cn[/url]
@@ -111,6 +157,7 @@
 ### 内部链接（主题、回复、版面、合集）
 
 > 等号可选，官方正则 `(tid|pid|fid|stid)=?(\d+)`
+> ❌ **APP 实测**：只有 `[tid=123]` / `[pid=123,5]` 可用；无等号形式、`[fid=]`、`[stid=]` 全部原样输出
 
 ```
 [tid=12345678]主题标题[/tid]
@@ -126,6 +173,8 @@
 ```
 
 ### 用户链接与 @提及
+
+> ❌ **APP 实测**：`[uid=123456]` 原样输出；`[@用户名]` 渲染为纯文本、不可点击
 
 ```
 [uid=123456]用户名[/uid]
@@ -160,6 +209,8 @@
 
 ### 有序列表
 
+> ❌ **APP 实测**：`[list=1]` 渲染为圆点（无序），不显示数字序号
+
 ```
 [list=1]
 [*]第一项
@@ -169,6 +220,8 @@
 ```
 
 ### 多层嵌套列表
+
+> ❌ **APP 实测**：嵌套层级被拉平，子项与根项同缩进
 
 ```
 [list]
@@ -188,6 +241,7 @@
 ### 基本表格（等号可选！）
 
 > 官方正则：`width=?(auto|\d+)`、`colspan=?\d+`、`rowspan=?\d+`
+> ❌ **APP 实测**：`[td width=120]` 宽度未生效，列宽会挤在一起错乱
 
 ```
 [table]
@@ -236,6 +290,8 @@
 
 ### 表头（th 关键字）
 
+> ❌ **APP 实测**：`[tr th]` 原样输出 BBCode，表头样式不生效
+
 ```
 [table]
 [tr th]
@@ -252,6 +308,8 @@
 ```
 
 ### 表格宽度
+
+> ❌ **APP 实测**：`[table width=600]` / `[table width600]` 整块原样输出 BBCode
 
 ```
 [table width=600]
@@ -270,6 +328,7 @@
 ### 图片（官方正则 `\[img(-?\d{0,3})\]`）
 
 > ⚠️ 参数直接跟标签名，**不带等号**！`[img-1]` `[img]` `[img123]` 都合法
+> ❌ **APP 实测**：只有 `[img]` 可用；`[img-1]` / `[img123]` 带参数形式会原样输出 BBCode
 
 ```
 [img]https://img4.nga.178.com/ngaweb/photo/2024/1201/abc123.jpg[/img]
@@ -280,6 +339,7 @@
 ### Flash 视频
 
 > 参数固定是 `=video`（不是宽高！）
+> ❌ **APP 实测**：`[flash=video]` 原样输出 BBCode，不播放
 
 ```
 [flash=video]https://example.com/video.swf[/flash]
@@ -288,6 +348,7 @@
 ### 多媒体（音频/视频）
 
 > 参数固定是 `=audio` 或 `=video`
+> ⚠️ **APP 未实测**：推测与 `flash` 一样原样输出，建议改用 `[attach]` 或链接
 
 ```
 [media=audio]https://example.com/music.mp3[/media]
@@ -297,6 +358,7 @@
 ### Iframe 嵌入
 
 > 参数是 `=宽,高`，逗号分隔，等号可选
+> ⚠️ **APP 未实测**：网页端还需域名白名单，APP 大概率原样输出
 
 ```
 [iframe=500,300]https://example.com/embed[/iframe]
@@ -324,6 +386,7 @@
 
 > ⚠️ 官方 `randomblock` 内部的内容**不会展开 `[*]` 标签**，直接写普通文本即可
 > 只有一个内部节点会被随机选中显示
+> ❌ **APP 实测**：整个 `[randomblock]` 连同闭标签原样输出，不随机
 
 ```
 [randomblock]
@@ -338,6 +401,8 @@
 ## 代码与加密
 
 ### 代码块
+
+> ❌ **APP 实测**：`[code]` / `[code=javascript]` / `[code=python]` 标签被剥离，只输出纯文本，无代码框、无语法高亮
 
 ```
 [code]
@@ -357,6 +422,8 @@ def hello():
 ```
 
 ### 密码保护
+
+> ❌ **APP 实测**：`[crypt]` 原样输出 BBCode，不解密
 
 ```
 [crypt]加密内容[/crypt]
@@ -414,11 +481,15 @@ def hello():
 
 ### 小标题
 
+> ⚠️ **APP 实测**：降级为加粗文本，无明显标题样式
+
 ```
 [h]这是小标题[/h]
 ```
 
 ### 处罚遮罩
+
+> ❌ **不支持**：`lessernuke` 不在普通帖子的解析正则里，任何端都原样输出
 
 ```
 [lessernuke]这行内容会被遮罩[/lessernuke]
@@ -426,11 +497,15 @@ def hello():
 
 ### 附件
 
+> ❌ **APP 实测**：`[attach]` 原样输出 BBCode，不解析附件
+
 ```
 [attach]attach_name[/attach]
 ```
 
 ### URL 替换
+
+> ❌ **不支持**：`urlreplace` 只在特定处理流程生效，普通帖子原样输出
 
 ```
 [urlreplace=http://old.example.com,http://new.example.com]原帖链接里的老域名[/urlreplace]
@@ -440,7 +515,7 @@ def hello():
 
 ## 版头与高级布局
 
-> 这些标签主要用于版头（版面公告），普通帖子里可能不生效。
+> 这些标签主要用于版头（版面公告），普通帖子里**原样输出不生效**，APP 同样不解析。
 
 ### 固定尺寸容器
 
@@ -486,6 +561,7 @@ def hello():
 
 > 下面这段包含了以上所有标签的示例，可以直接复制到论坛发帖框查看渲染效果。
 > 部分标签（版头专用、加密、骰子等）可能需要特定上下文才会触发。
+> ⚠️ 其中 `[fid]`/`[stid]`/`[uid]`/`[img-1]`/`[flash]`/`[attach]`/`[randomblock]`/`[code]`/`[crypt]`/`[lessernuke]` 在 APP 端会原样输出，详见文首「APP 端支持情况」。
 
 ```
 [b]加粗[/b] [i]斜体[/i] [u]下划线[/u] [del]删除线[/del] [sup]上标[/sup] [sub]下标[/sub]
