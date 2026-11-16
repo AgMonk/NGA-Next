@@ -7,6 +7,7 @@
 |------|------|
 | **NGA-OFFICIAL-JS** | 官方 JS 文件留档，作为后续所有模块实现的参考 |
 | **NGA-BBSCODE-TO-JSON** | BBS 代码解析为 JSON 的实现，包含文档和 Kotlin、TypeScript 实现 |
+| **NGA-BBSCODE-FROM-MD** | 将标准 Markdown 转换为 NGA BBCode 的实现，包含映射文档和 Kotlin、TypeScript 实现 |
 | **NGA-BBSCODE-SMILES** | 表情/笑脸解析模块，包含文档、解析方法、解析结果 JSON、code 与图片对照 |
 | **NGA-WEB-API** | Web API 封装，包含文档和 Kotlin 实现 |
 | **NGA-ANDROID-JPC** | Android APP，使用 Kotlin + Jetpack Compose 实现，调用前面的 API 模块，参考旧 APP 实现 |
