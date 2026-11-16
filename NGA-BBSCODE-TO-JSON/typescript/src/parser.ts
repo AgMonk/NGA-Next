@@ -54,21 +54,42 @@ export function parse(input: string | ParseInput): ParseOutput {
   const source = typeof input === 'string' ? input : input.source;
   const warnings: string[] = [];
 
-  const smileProcessed = preprocessSmiles(source);
-  const preprocessed = preprocess(smileProcessed, {
+  // 1. 表情归一
+  let text = preprocessSmiles(source);
+
+  // 2. 移除 preprocessRemove 标签（comment / stripbr）
+  text = preprocessRemoveTags(text);
+
+  // 3. 通用预处理
+  text = preprocess(text, {
     htmlEscape: opts.preserveHtmlEntities ? false : true,
     markdownCompat: opts.markdownCompat,
     cleanBoundaries: true,
   });
 
   const ctx: ParseContext = { options: opts, depth: 0 };
-  const children = parseNodes(preprocessed, ctx, warnings);
+  const children = parseNodes(text, ctx, warnings);
 
   return {
     children,
     source,
-    debug: { preprocessed, warnings },
+    debug: { preprocessed: text, warnings },
   };
+}
+
+/**
+ * 预处理阶段直接移除的标签：
+ *   [comment // xxx]      → 移除
+ *   [/comment]            → 移除
+ *   [stripbr]             → 移除
+ */
+function preprocessRemoveTags(text: string): string {
+  let result = text;
+  // [comment ...] 和 [/comment] — 官方: replace(/\[\/?comment (.+?)\]/g,'')
+  result = result.replace(/\[\/?comment(?:\s[^\]]*)?\]/gi, '');
+  // [stripbr] — 官方: replace(/\[stripbr\][\x00\s]*/g,'')
+  result = result.replace(/\[stripbr\][\s\x00]*/gi, '');
+  return result;
 }
 
 // ========== 核心递归解析 ==========
@@ -221,7 +242,9 @@ function buildTagNode(
   ctx: ParseContext,
   warnings: string[]
 ) {
-  const params = parseTagParams(rawParams);
+  const params = cfg?.paramMode === 'space'
+    ? parseSpaceParams(rawParams)
+    : parseTagParams(rawParams);
 
   let children: BbscodeNode[];
   if (cfg?.rawContent) {
@@ -240,11 +263,10 @@ function buildTagNode(
 }
 
 /**
- * 解析标签参数
+ * key=value 模式参数解析（默认）
  *   [pid=123,456]           → { value: '123,456' }
  *   [color=red]             → { value: 'red' }
  *   [td width=80 auto]      → { width: '80', auto: 'true' }
- *   [td=width=80 auto]      → { width: '80', auto: 'true' }
  */
 function parseTagParams(raw: string | undefined): Record<string, string> {
   const result: Record<string, string> = {};
@@ -254,18 +276,12 @@ function parseTagParams(raw: string | undefined): Record<string, string> {
   if (s.startsWith('=')) s = s.substring(1);
   if (!s) return result;
 
-  // 是否有 key=value 模式（字母开头，等号，后面非空）
-  // 规则：如果出现 " 字母=值 " 或者 ",字母=值"，就是多参数
   const hasKeyValue = /(?:[\s,])[a-zA-Z][a-zA-Z0-9]*=/.test(' ' + s);
 
   if (hasKeyValue) {
-    // 先按空格分割，再处理
-    // 但 key=value 中可能含逗号如 colspan=2,rowspan=3
     const parts: string[] = [];
-    // 先把 "key=val1,val2" 这种当作一个 part
     s.split(/[\s]+/).forEach((seg) => {
       if (seg.includes('=')) {
-        // 这个 segment 可能含逗号参数 "key=val1,key2=val2"
         seg.split(/,(?=[a-zA-Z]+=)/).forEach((p) => parts.push(p));
       } else if (seg.includes(',')) {
         seg.split(',').filter(Boolean).forEach((p) => parts.push(p));
@@ -289,6 +305,77 @@ function parseTagParams(raw: string | undefined): Record<string, string> {
   }
 
   result.value = s;
+  return result;
+}
+
+/**
+ * 空格交替模式参数解析（fixsize / style 等版头标签）
+ * 形式：key value key value ...  部分 key 后面可能跟多个 value
+ *   [fixsize height 19.3 width 60 153 background transparent transparent]
+ *     → { height: '19.3', width: '60', width_1: '153',
+ *          background: 'transparent', background_1: 'transparent' }
+ *   [style left 0.3 top 0 width 19 padding 0 0]
+ *     → { left: '0.3', top: '0', width: '19', padding: '0', padding_1: '0' }
+ *
+ * 规则：遇到已知 key 就切换，其他 token 当作前一个 key 的 value
+ */
+function parseSpaceParams(raw: string | undefined): Record<string, string> {
+  const result: Record<string, string> = {};
+  if (!raw) return result;
+
+  let s = raw.trim();
+  if (s.startsWith('=')) s = s.substring(1);
+  if (!s) return result;
+
+  const tokens = s.split(/[\s,]+/).filter(Boolean);
+
+  // 已知的 style/fixsize 参数 key（参考官方 JS switch-case）
+  const knownKeys = new Set([
+    // fixsize
+    'width', 'height', 'background',
+    // style
+    'rotate', 'scale', 'margin', 'padding',
+    'clear', 'float',
+    'top', 'right', 'bottom', 'left',
+    'align',
+    'border-radius', 'line-height', 'line',
+    'font',
+    'innerHTML',
+    'src',
+    'extendtop',
+    'color',
+    'background-repeat',
+    'filter-drop-shadow',
+    'dybg',
+    'parentfitwidth',
+    'aligntobottom',
+    'randprop',
+  ]);
+
+  let currentKey: string | null = null;
+  let valueCount = 0;
+
+  for (const tok of tokens) {
+    const lowerTok = tok.toLowerCase();
+    if (knownKeys.has(lowerTok)) {
+      // 新 key 开始
+      currentKey = lowerTok;
+      valueCount = 0;
+      continue;
+    }
+    if (currentKey) {
+      if (valueCount === 0) {
+        result[currentKey] = tok;
+      } else {
+        result[`${currentKey}_${valueCount}`] = tok;
+      }
+      valueCount++;
+    } else {
+      // 还没 key，第一个 token 当 value
+      result.value = tok;
+    }
+  }
+
   return result;
 }
 

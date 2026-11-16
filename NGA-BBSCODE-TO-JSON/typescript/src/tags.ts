@@ -21,6 +21,12 @@ export interface TagConfig {
   maxNesting?: number;
   /** 是否允许带参数 */
   allowParams?: boolean;
+  /** 参数模式：默认 'key=value'，'space' 表示 key val key val 交替 */
+  paramMode?: 'keyValue' | 'space';
+  /** 是否在预处理阶段直接移除（不进 AST） */
+  preprocessRemove?: boolean;
+  /** 是否忽略（解析为普通文本） */
+  skip?: boolean;
 }
 
 /**
@@ -88,6 +94,17 @@ export const TAG_CONFIGS: TagConfig[] = [
   { name: 'heading', aliases: ['h'] },
   { name: 'lessernuke' },
   { name: 'atUser', aliases: ['at'] },
+
+  // ===== 版头/高级布局（NGA 论坛专用，参数为 key val 交替）=====
+  { name: 'fixsize', allowParams: true, paramMode: 'space', maxNesting: 2 },
+  { name: 'style', allowParams: true, paramMode: 'space', maxNesting: 10 },
+  { name: 'parentfitwidth', allowParams: true, paramMode: 'space' },
+  { name: 'aligntobottom' },
+  { name: 'extendtop' },
+
+  // ===== 注释/标记（预处理阶段移除）=====
+  { name: 'comment', selfClosing: true, preprocessRemove: true },
+  { name: 'stripbr', selfClosing: true, preprocessRemove: true },
 ];
 
 /** 标签名 → 配置 */

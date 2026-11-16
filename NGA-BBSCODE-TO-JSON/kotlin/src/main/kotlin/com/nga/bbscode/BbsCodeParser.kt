@@ -52,7 +52,11 @@ data class TagConfig(
     val aliases: Set<String> = emptySet(),
     val selfClosing: Boolean = false,
     val rawContent: Boolean = false,
-    val maxNesting: Int? = null
+    val maxNesting: Int? = null,
+    /** 参数模式：默认 keyValue，space = key val key val 交替 */
+    val paramMode: String = "keyValue",
+    /** 预处理阶段直接移除（不进 AST） */
+    val preprocessRemove: Boolean = false
 )
 
 object TagRegistry {
@@ -117,6 +121,17 @@ object TagRegistry {
         TagConfig("heading", aliases = setOf("h")),
         TagConfig("lessernuke"),
         TagConfig("atUser", aliases = setOf("at")),
+
+        // ===== 版头/高级布局（paramMode = space）=====
+        TagConfig("fixsize", paramMode = "space", maxNesting = 2),
+        TagConfig("style", paramMode = "space", maxNesting = 10),
+        TagConfig("parentfitwidth", paramMode = "space"),
+        TagConfig("aligntobottom"),
+        TagConfig("extendtop"),
+
+        // ===== 注释/标记（预处理移除）=====
+        TagConfig("comment", selfClosing = true, preprocessRemove = true),
+        TagConfig("stripbr", selfClosing = true, preprocessRemove = true),
     )
 
     /** 规范名/别名 → 配置 */
@@ -218,9 +233,20 @@ fun htmlUnescape(text: String): String {
 /** 完整预处理 */
 fun preprocess(text: String): String {
     var result = preprocessSmiles(text)
+    result = preprocessRemoveTags(result)
     result = normalizeNewlines(result)
     result = cleanBoundaryNewlines(result)
     result = htmlEscapeOutsideTags(result)
+    return result
+}
+
+/**
+ * 预处理阶段直接移除的标签
+ */
+private fun preprocessRemoveTags(text: String): String {
+    var result = text
+    result = result.replace(Regex("""\[\/?comment(?:\s[^\]]*)?\]""", RegexOption.IGNORE_CASE), "")
+    result = result.replace(Regex("""\[stripbr\][\s\u0000]*""", RegexOption.IGNORE_CASE), "")
     return result
 }
 
@@ -360,7 +386,7 @@ private fun buildTagNode(
     parentDepth: Int,
     maxDepth: Int
 ): TagNode {
-    val params = parseParams(rawParams)
+    val params = if (cfg.paramMode == "space") parseSpaceParams(rawParams) else parseParams(rawParams)
 
     val children = if (cfg.rawContent) {
         listOf(TextNode(content = htmlUnescape(innerContent)))
@@ -377,7 +403,7 @@ private fun buildTagNode(
 }
 
 /**
- * 解析标签参数
+ * key=value 模式参数解析（默认）
  *   [pid=123,456]      → { value: '123,456' }
  *   [td width=80 auto] → { width: '80', auto: 'true' }
  */
@@ -388,7 +414,6 @@ private fun parseParams(raw: String?): Map<String, String> {
     if (s.isEmpty()) return emptyMap()
 
     val result = mutableMapOf<String, String>()
-
     val hasKeyValue = Regex("""(?:[\s,])[a-zA-Z][a-zA-Z0-9]*=""").find(" $s") != null
 
     if (hasKeyValue) {
@@ -417,6 +442,70 @@ private fun parseParams(raw: String?): Map<String, String> {
     }
 
     result["value"] = s
+    return result
+}
+
+/**
+ * 空格交替模式参数解析（fixsize / style 等版头标签）
+ *   [fixsize height 19.3 width 60 153 background transparent transparent]
+ *     → { height: '19.3', width: '60', width_1: '153',
+ *          background: 'transparent', background_1: 'transparent' }
+ *   [style left 0.3 top 0 width 19 padding 0 0]
+ *     → { left: '0.3', top: '0', width: '19', padding: '0', padding_1: '0' }
+ */
+private fun parseSpaceParams(raw: String?): Map<String, String> {
+    if (raw == null) return emptyMap()
+    var s = raw.trim()
+    if (s.startsWith("=")) s = s.substring(1)
+    if (s.isEmpty()) return emptyMap()
+
+    val result = mutableMapOf<String, String>()
+    val tokens = s.split(Regex("""[\s,]+""")).filter { it.isNotEmpty() }
+
+    val knownKeys = setOf(
+        // fixsize
+        "width", "height", "background",
+        // style
+        "rotate", "scale", "margin", "padding",
+        "clear", "float",
+        "top", "right", "bottom", "left",
+        "align",
+        "border-radius", "line-height", "line",
+        "font",
+        "innerHTML",
+        "src",
+        "extendtop",
+        "color",
+        "background-repeat",
+        "filter-drop-shadow",
+        "dybg",
+        "parentfitwidth",
+        "aligntobottom",
+        "randprop",
+    )
+
+    var currentKey: String? = null
+    var valueCount = 0
+
+    for (tok in tokens) {
+        val lowerTok = tok.lowercase()
+        if (knownKeys.contains(lowerTok)) {
+            currentKey = lowerTok
+            valueCount = 0
+            continue
+        }
+        if (currentKey != null) {
+            if (valueCount == 0) {
+                result[currentKey] = tok
+            } else {
+                result["${currentKey}_${valueCount}"] = tok
+            }
+            valueCount++
+        } else {
+            result["value"] = tok
+        }
+    }
+
     return result
 }
 
