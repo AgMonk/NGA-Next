@@ -36,8 +36,24 @@ test('斜体 [i]', '[i]italic[/i]', (c) => c[0].name === 'italic');
 test('下划线 [u]', '[u]underline[/u]', (c) => c[0].name === 'underline');
 test('删除线 [del]', '[del]strike[/del]', (c) => c[0].name === 'strikethrough');
 
-test('颜色 [color]', '[color=red]text[/color]', (c) =>
+test('颜色 [color] 合法颜色名', '[color=red]text[/color]', (c) =>
   c[0].name === 'color' && c[0].params.value === 'red'
+);
+
+test('颜色 [color] HEX 值（官方渲染层会报错，但解析器如实记录）', '[color=#ff0000]text[/color]', (c) =>
+  c[0].name === 'color' && c[0].params.value === '#ff0000'
+);
+
+test('颜色 [color] 任意值（解析器只管语法）', '[color=任意值]text[/color]', (c) =>
+  c[0].name === 'color' && c[0].params.value === '任意值'
+);
+
+test('字号 [size] 百分比', '[size=120%]big[/size]', (c) =>
+  c[0].name === 'size' && c[0].params.value === '120%'
+);
+
+test('字体 [font]', '[font=Arial]text[/font]', (c) =>
+  c[0].name === 'font' && c[0].params.value === 'Arial'
 );
 
 // ===== 3. 嵌套样式 =====

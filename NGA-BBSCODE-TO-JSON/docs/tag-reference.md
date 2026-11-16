@@ -87,11 +87,30 @@
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| `=值` | 颜色名 / HEX | 如 `red`, `#ff0000`, `#f00` |
+| `=值` | **官方颜色名**（仅支持白名单） | 见下方列表 |
+
+> ⚠️ **重要**：官方渲染器**不支持 HEX 写法**（如 `#ff0000`），只接受以下 25 种预定义颜色名。
+> 非法值会被渲染为 `/* bbscode color error */`。
+> 另：style 容器中的 color/background 属性支持 HEX，见 [style](#fixsize-与-style-版头容器)。
+
+**官方颜色名白名单**（来源：`bbscode.js` 行 3339）：
+```
+skyblue, royalblue, blue, darkblue,
+orange, orangered, crimson, red, firebrick, darkred,
+green, limegreen, seagreen, teal,
+deeppink, tomato, coral,
+purple, indigo,
+burlywood, sandybrown, sienna, chocolate,
+silver, gray
+```
+
+也可加 `bg` 前缀表示背景色：`[bgcolor=red]...[/bgcolor]`
 
 ```
-[color=red]红色[/color]            → params: { value: "red" }
-[color=#00ff00]HEX绿色[/color]      → params: { value: "#00ff00" }
+[color=red]红色[/color]       → params: { value: "red" }
+[bgcolor=skyblue]蓝底[/bgcolor] → params: { value: "skyblue" }
+# 下面这个 HEX 写法官方会报错，但解析器仍会如实记录：
+[color=#00ff00]绿色[/color]   → params: { value: "#00ff00" }   ⚠️ 渲染层会报错
 ```
 
 ### `[size=尺寸]...[/size]` 字号
@@ -103,7 +122,10 @@
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| `=值` | 百分比 / em | 如 `120%`, `1.5em`, `20px` |
+| `=值` | **百分比数字**（`\d{1,3}%?`） | 如 `100`, `120%`, `200` |
+
+> ⚠️ **重要**：官方只接受 1-3 位数字（可带可选 `%` 后缀），如 `120%`、`200`。不支持 `em`、`px` 等单位。
+> 非法值会被渲染为 `/* bbscode size error */`。
 
 ### `[font=字体]...[/font]` 字体
 
@@ -114,7 +136,17 @@
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| `=值` | 字体名 | 如 `微软雅黑`, `Consolas`, `Arial` |
+| `=值` | **官方字体名**（仅支持白名单） | 见下方列表 |
+
+> ⚠️ **重要**：官方渲染器**只接受以下 17 种预定义字体名**，非法值会被渲染为 `/* bbscode font error */`。
+
+**官方字体名白名单**（来源：`bbscode.js` 行 3351）：
+```
+simsun, simhei,
+Arial, "Arial Black", "Book Antiqua", "Century Gothic", "Comic Sans MS",
+"Courier New", Georgia, Impact, Tahoma, "Times New Roman",
+"Trebuchet MS", "Script MT Bold", Stencil, Verdana, "Lucida Console"
+```
 
 ### `[align=center|left|right|justify]...[/align]` 对齐
 
