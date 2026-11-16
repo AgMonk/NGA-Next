@@ -76,11 +76,15 @@
 
 ### 字体
 
+> 官方白名单 17 种：`simsun` / `simhei` / `Arial` / `Arial Black` / `Book Antiqua` / `Century Gothic` / `Comic Sans MS` / `Courier New` / `Georgia` / `Impact` / `Tahoma` / `Times New Roman` / `Trebuchet MS` / `Script MT Bold` / `Stencil` / `Verdana` / `Lucida Console`
+> 不在白名单的字体名渲染为 `/* bbscode font error */`
+
 ```
-[font=微软雅黑]微软雅黑[/font]
-[font=宋体]宋体[/font]
-[font=黑体]黑体[/font]
-[font=等宽字体]等宽字体[/font]
+[font=simsun]simsun 宋体[/font]
+[font=simhei]simhei 黑体[/font]
+[font=Arial]Arial[/font]
+[font=Georgia]Georgia[/font]
+[font=Courier New]Courier New[/font]
 ```
 
 ### 对齐
@@ -496,7 +500,7 @@ def hello():
 [color=silver]银灰[/color] [color=gray]灰[/color]
 [color=bgred]红底[/color] [color=bgblue]蓝底[/color] [color=bgsilver]银底[/color]
 
-[size=150]大字号[/size] [font=微软雅黑]微软雅黑[/font]
+[size=150]大字号[/size] [font=simsun]simsun[/font] [font=Arial]Arial[/font]
 
 [align=center]居中[/align]
 
