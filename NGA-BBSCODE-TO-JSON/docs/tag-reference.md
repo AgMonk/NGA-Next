@@ -150,7 +150,7 @@ Arial, "Arial Black", "Book Antiqua", "Century Gothic", "Comic Sans MS",
 "Trebuchet MS", "Script MT Bold", Stencil, Verdana, "Lucida Console"
 ```
 
-### `[align=center|left|right|justify]...[/align]` 对齐
+### `[align=center|left|right]...[/align]` 对齐
 
 | 项 | 说明 |
 |----|------|
@@ -160,7 +160,10 @@ Arial, "Arial Black", "Book Antiqua", "Century Gothic", "Comic Sans MS",
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| `=值` | `center` / `left` / `right` / `justify` | 对齐方向 |
+| `=值` | `center` / `left` / `right` | 对齐方向 |
+
+> ⚠️ **官方只认这三个值**，正则 `/^(left|right|center)\s*$/i`（`bbscode.js` 行 3398）。
+> `justify`、`justify-all`、`top`、`bottom` 等都会渲染为 `/* bbscode align error */`。
 
 ### `[span=样式]...[/span]` 行内样式
 
@@ -422,6 +425,15 @@ Arial, "Arial Black", "Book Antiqua", "Century Gothic", "Comic Sans MS",
 
 多个 `[randomblock]` 同时出现时，渲染器随机选择显示其中一个。
 
+> ⚠️ **实测**：`randomblock` 内部的内容**不会展开 `[*]` 标签**——它只保存原始文本供后续随机选取，内部不会被当成列表解析。直接写普通文本即可：
+> ```
+> [randomblock]
+> 选项 A - 幸运儿
+> 选项 B - 可能是我
+> [/randomblock]
+> ```
+> 写成 `[randomblock][*]A[*]B[/randomblock]` 会残留 `[*]` 原始标签。
+
 ---
 
 ## 代码
@@ -533,6 +545,11 @@ Arial, "Arial Black", "Book Antiqua", "Century Gothic", "Comic Sans MS",
 |------|--------|------|
 | `[s:1]` | `[smile=1]` | 数字索引表情 |
 | `[s:ac:goodjob]` | `[smile=ac:goodjob]` | 分组表情 |
+
+> ⚠️ **实测**：**AC 娘分组的表情名是中文**，不是英文！
+> `[s:ac:囧]` `[s:ac:怒]` `[s:ac:哭]` `[s:ac:茶]` 会渲染成图片；
+> 但 `[s:ac:confused]` `[s:ac:mad]` `[s:ac:cry]` 等英文**不在官方映射里**，会残留为原始标签不渲染。
+> 官方 AC 娘分组共 45 个表情名（完整列表见 `docs/bbscode-render-test.md` 表情章节）。
 
 **预处理阶段转换**（`preprocessSmiles`）→ 两种格式统一转为 `[smile=值]` 进入解析器。
 

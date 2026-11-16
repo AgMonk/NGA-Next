@@ -41,20 +41,31 @@
 [b][i][u]粗斜下划线[/u][/i][/b]
 ```
 
-### 文字颜色（25 种官方颜色名）
+### 文字颜色（25 种官方白名单颜色）
 
-> ⚠️ 官方不支持 HEX（如 `#ff0000`），只认颜色名；参数必须有等号
+> ⚠️ 官方正则：`/^(bg)?(skyblue|royalblue|blue|darkblue|orange|orangered|crimson|red|firebrick|darkred|green|limegreen|seagreen|teal|deeppink|tomato|coral|purple|indigo|burlywood|sandybrown|sienna|chocolate|silver|gray)\s*$/i`
+> 不在白名单里的值（如 `yellow`/`gold`/`black`/`white`）渲染为 `/* bbscode color error */`
+> `bg` 前缀 + 白名单颜色名 = 背景色（如 `bgred` ✅ `bgblack` ❌ 因为 black 不在白名单）
 
 ```
-[color=red]红色[/color] [color=blue]蓝色[/color] [color=green]绿色[/color]
-[color=orange]橙色[/color] [color=purple]紫色[/color] [color=skyblue]天蓝[/color]
-[color=royalblue]宝蓝[/color] [color=darkblue]深蓝[/color]
-[color=orangered]橙红[/color] [color=crimson]洋红[/color]
-[color=firebrick]砖红[/color] [color=darkred]暗红[/color]
-[color=limegreen]青柠绿[/color] [color=seagreen]海绿[/color] [color=teal]青绿[/color]
-[color=yellow]黄色[/color] [color=gold]金色[/color]
-[color=black]黑色[/color] [color=white]白色[/color] [color=gray]灰色[/color]
-[color=bgred]红底白字[/color] [color=bgblue]蓝底白字[/color]
+[color=skyblue]天蓝skyblue[/color] [color=royalblue]宝蓝royalblue[/color]
+[color=blue]蓝blue[/color] [color=darkblue]深蓝darkblue[/color]
+
+[color=orange]橙orange[/color] [color=orangered]橙红orangered[/color] [color=crimson]洋红crimson[/color]
+
+[color=red]红red[/color] [color=firebrick]砖红firebrick[/color] [color=darkred]暗红darkred[/color]
+
+[color=green]绿green[/color] [color=limegreen]青柠limegreen[/color] [color=seagreen]海绿seagreen[/color] [color=teal]青绿teal[/color]
+
+[color=deeppink]深粉deeppink[/color] [color=tomato]番茄tomato[/color] [color=coral]珊瑚coral[/color]
+
+[color=purple]紫purple[/color] [color=indigo]靛蓝indigo[/color]
+
+[color=burlywood]原木burlywood[/color] [color=sandybrown]沙棕sandybrown[/color] [color=sienna]赭sienna[/color] [color=chocolate]巧克力chocolate[/color]
+
+[color=silver]银灰silver[/color] [color=gray]灰gray[/color]
+
+[color=bgred]红底bgred[/color] [color=bgblue]蓝底bgblue[/color] [color=bgsilver]银底bgsilver[/color] [color=bgdarkred]暗红底bgdarkred[/color]
 ```
 
 ### 字号
@@ -73,6 +84,8 @@
 ```
 
 ### 对齐
+
+> ⚠️ 官方正则 `/^(left|right|center)\s*$/i`，**只认这三个值**，`justify` 会渲染为 `/* bbscode align error */`
 
 ```
 [align=center]居中对齐[/align]
@@ -305,13 +318,14 @@
 
 ### 随机显示
 
+> ⚠️ 官方 `randomblock` 内部的内容**不会展开 `[*]` 标签**，直接写普通文本即可
 > 只有一个内部节点会被随机选中显示
 
 ```
 [randomblock]
-[*]选项 A
-[*]选项 B
-[*]选项 C
+选项 A - 幸运儿
+选项 B - 可能是我
+选项 C - 也有可能是这个
 [/randomblock]
 ```
 
@@ -348,20 +362,39 @@ def hello():
 
 ## 表情
 
-### 数字表情
+> 官方表情正则 `/\[s:(.{1,10}?)\]/gi`。数字表情格式 `[s:编号]`，分组表情格式 `[s:分组:名字]`。
+> ⚠️ **AC 娘分组表情名是中文**，不是英文！`confused`/`mad`/`cry` 等英文不存在，会残留为原始标签不渲染。
+
+### 数字表情（默认分组）
 
 ```
-[s:1] [s:2] [s:3] [s:ac:goodjob] [s:ac:confused]
+[s:1] [s:2] [s:3] [s:4] [s:5] [s:6] [s:7] [s:8]
 ```
 
-### 常见表情分组示例
-
-> 官方有 15+ 分组，可在论坛发帖框表情面板查看具体列表
+### AC 娘分组（中文表情名，官方 45 种）
 
 ```
-[s:ac:goodjob]   [s:ac:confused]   [s:ac:ohno]   [s:ac:blink]
-[s:ac:cry]       [s:ac:mad]       [s:ac:lol]    [s:ac:go]
+[s:ac:blink] [s:ac:goodjob] [s:ac:上] [s:ac:中枪] [s:ac:偷笑]
+[s:ac:冷] [s:ac:凌乱] [s:ac:吓] [s:ac:吻] [s:ac:呆]
+[s:ac:哭] [s:ac:哭1] [s:ac:哭笑] [s:ac:喘] [s:ac:心]
+[s:ac:囧] [s:ac:晕] [s:ac:汗] [s:ac:羞] [s:ac:羡慕]
+[s:ac:委屈] [s:ac:忧伤] [s:ac:怒] [s:ac:怕] [s:ac:惊]
+[s:ac:愁] [s:ac:抓狂] [s:ac:哼] [s:ac:喷] [s:ac:无语]
+[s:ac:衰] [s:ac:花痴] [s:ac:闪光] [s:ac:擦汗] [s:ac:茶]
+[s:ac:计划通] [s:ac:反对] [s:ac:赞同]
 ```
+
+### 官方分组一览
+
+| 分组 key | 显示名 | 数量 | 说明 |
+|----------|--------|------|------|
+| `0` | 默认 | 27 | 纯编号 `[s:1]`~`[s:27]` |
+| `ac` | AC娘(v1) | 45 | 中文表情名 |
+| `a2` | — | — | — |
+| `ng` | NG娘 | 34 | — |
+| `pst` | — | — | — |
+| `dt` | — | — | — |
+| `pg` | — | — | — |
 
 ---
 
@@ -453,11 +486,19 @@ def hello():
 ```
 [b]加粗[/b] [i]斜体[/i] [u]下划线[/u] [del]删除线[/del] [sup]上标[/sup] [sub]下标[/sub]
 
-[color=red]红[/color] [color=blue]蓝[/color] [color=green]绿[/color] [color=bgred]红底白字[/color]
+[color=skyblue]天蓝[/color] [color=royalblue]宝蓝[/color] [color=blue]蓝[/color] [color=darkblue]深蓝[/color]
+[color=orange]橙[/color] [color=orangered]橙红[/color] [color=crimson]洋红[/color]
+[color=red]红[/color] [color=firebrick]砖红[/color] [color=darkred]暗红[/color]
+[color=green]绿[/color] [color=limegreen]青柠[/color] [color=seagreen]海绿[/color] [color=teal]青绿[/color]
+[color=deeppink]深粉[/color] [color=tomato]番茄[/color] [color=coral]珊瑚[/color]
+[color=purple]紫[/color] [color=indigo]靛蓝[/color]
+[color=burlywood]原木[/color] [color=sandybrown]沙棕[/color] [color=sienna]赭[/color] [color=chocolate]巧克力[/color]
+[color=silver]银灰[/color] [color=gray]灰[/color]
+[color=bgred]红底[/color] [color=bgblue]蓝底[/color] [color=bgsilver]银底[/color]
 
 [size=150]大字号[/size] [font=微软雅黑]微软雅黑[/font]
 
-[align=center]居中对齐[/align]
+[align=center]居中[/align]
 
 [url=https://www.nga.cn]NGA[/url]
 [tid=12345678]主题标题[/tid]
@@ -509,7 +550,7 @@ var x = 1;
 function hello() { return "world"; }
 [/code]
 
-[s:1] [s:2] [s:ac:goodjob] [s:ac:blink]
+[s:1] [s:2] [s:ac:blink] [s:ac:goodjob] [s:ac:囧] [s:ac:怒] [s:ac:茶]
 
 [dice]3d6[/dice]
 
