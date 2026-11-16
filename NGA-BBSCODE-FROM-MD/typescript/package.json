@@ -1,0 +1,15 @@
+{
+  "name": "nga-bbscode-from-md",
+  "version": "0.1.0",
+  "description": "Markdown → NGA BBCode 转换器",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node test/test-convert.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
