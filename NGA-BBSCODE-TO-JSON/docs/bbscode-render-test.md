@@ -2,7 +2,6 @@
 
 > 本文档包含 NGA 论坛所有 BBCode 标签的可直接复制的示例。
 > 每个示例都可以单独复制到论坛发帖框测试渲染效果。
-> 所有示例都已用官方 `bbscode.js` 的实际正则/白名单校验过。
 
 ---
 
@@ -17,6 +16,7 @@
 - [代码与加密](#代码与加密)
 - [表情](#表情)
 - [其他功能](#其他功能)
+- [版头与高级布局](#版头与高级布局)
 - [全标签大全（一键复制）](#全标签大全一键复制)
 
 ---
@@ -43,7 +43,7 @@
 
 ### 文字颜色（25 种官方颜色名）
 
-> ⚠️ 官方不支持 HEX（如 `#ff0000`），只认颜色名；参数必须有等号。非法值渲染为 `/* bbscode color error */`
+> ⚠️ 官方不支持 HEX（如 `#ff0000`），只认颜色名；参数必须有等号
 
 ```
 [color=red]红色[/color] [color=blue]蓝色[/color] [color=green]绿色[/color]
@@ -52,58 +52,24 @@
 [color=orangered]橙红[/color] [color=crimson]洋红[/color]
 [color=firebrick]砖红[/color] [color=darkred]暗红[/color]
 [color=limegreen]青柠绿[/color] [color=seagreen]海绿[/color] [color=teal]青绿[/color]
-[color=deeppink]深粉[/color] [color=tomato]番茄[/color] [color=coral]珊瑚[/color]
-[color=indigo]靛蓝[/color] [color=burlywood]原木[/color] [color=sandybrown]沙棕[/color]
-[color=sienna]赭色[/color] [color=chocolate]巧克力[/color]
 [color=yellow]黄色[/color] [color=gold]金色[/color]
 [color=black]黑色[/color] [color=white]白色[/color] [color=gray]灰色[/color]
-[color=bgred]红底白字[/color] [color=bgblue]蓝底白字[/color] [color=bgblack]黑底白字[/color]
+[color=bgred]红底白字[/color] [color=bgblue]蓝底白字[/color]
 ```
 
 ### 字号
-
-> 官方只接受数字 + 可选 `%`，其他值渲染为 `/* bbscode size error */`
 
 ```
 [size=50]50% 小[/size] 正常 [size=150]150% 大[/size] [size=200]200% 超大[/size]
 ```
 
-### 字体（仅 17 种白名单可用）
-
-> ⚠️ 官方只有以下 17 种字体可用，其他值渲染为 `/* bbscode font error */`
-> 注意：`微软雅黑`、`等宽字体` 等不在白名单里！
-
-**合法值**（来源：`bbscode.js` 行 3351）：
-
-| 值 | 显示名 |
-|----|--------|
-| `simsun` | 宋体 |
-| `simhei` | 黑体 |
-| `Arial` | Arial |
-| `Arial Black` | Arial Black |
-| `Book Antiqua` | Book Antiqua |
-| `Century Gothic` | Century Gothic |
-| `Comic Sans MS` | Comic Sans MS |
-| `Courier New` | Courier New |
-| `Georgia` | Georgia |
-| `Impact` | Impact |
-| `Tahoma` | Tahoma |
-| `Times New Roman` | Times New Roman |
-| `Trebuchet MS` | Trebuchet MS |
-| `Script MT Bold` | Script MT Bold |
-| `Stencil` | Stencil |
-| `Verdana` | Verdana |
-| `Lucida Console` | Lucida Console |
+### 字体
 
 ```
-[font=simsun]宋体 simsun[/font]
-[font=simhei]黑体 simhei[/font]
-[font=Arial]Arial[/font]
-[font=Georgia]Georgia[/font]
-[font=Courier New]Courier New[/font]
-[font=Times New Roman]Times New Roman[/font]
-[font=Verdana]Verdana[/font]
-[font=Impact]Impact[/font]
+[font=微软雅黑]微软雅黑[/font]
+[font=宋体]宋体[/font]
+[font=黑体]黑体[/font]
+[font=等宽字体]等宽字体[/font]
 ```
 
 ### 对齐
@@ -112,7 +78,6 @@
 [align=center]居中对齐[/align]
 [align=right]右对齐[/align]
 [align=left]左对齐[/align]
-[align=justify]两端对齐[/align]
 ```
 
 ---
@@ -285,80 +250,46 @@
 
 ## 媒体
 
-### 图片（官方正则 `\[img(-?\d{0,3})\]...\[/img\]`）
+### 图片（官方正则 `\[img(-?\d{0,3})\]`）
 
-> ⚠️ **开标签**参数直接跟标签名、不带等号；但**闭标签永远是 `[/img]`！**
-> 正确写法：`[img-1]url[/img]` ✅
-> 错误写法：`[img-1]url[/img-1]` ❌ 闭标签带参数会匹配失败
+> ⚠️ 参数直接跟标签名，**不带等号**！`[img-1]` `[img]` `[img123]` 都合法
 
 ```
-[img]https://img.nga.cn/attachments/mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg[/img]
-
-[img-1]https://img.nga.cn/attachments/mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img]
+[img]https://img4.nga.178.com/ngaweb/photo/2024/1201/abc123.jpg[/img]
+[img-1]https://img4.nga.178.com/ngaweb/photo/2024/1201/abc123.jpg[/img]
+[img123]https://img4.nga.178.com/ngaweb/photo/2024/1201/abc123.jpg[/img]
 ```
 
-### 相对路径图片（附件上传自动生成）
+### Flash 视频
 
-> NGA 论坛附件上传后，BBCode 里的图片地址通常是**相对路径**，以 `./` 开头。
-> 官方 `imgGen`（行 1948-1953）会自动把相对路径转成完整 URL：
->
-> ```javascript
-> // src 以 '.' 开头时
-> if(src.charAt(0)=='.'){
->     src = src.replace(/^\.(\d+)?\//, function(a,b){
->         // 数字目录（版本替换）→ arg.urlReplace[b-1]
->         // 普通 ./mon_xxx/xxx → commonui.getAttachBase(src)
->         return commonui.getAttachBase(src)+'/';
->     })
-> }
-> // 非 http(s) 开头 → 补 https://
-> if(!src.match(/^https?:\/\//)) src = 'https://'+src;
-> ```
->
-> | 相对路径写法 | 转换后（实际浏览器请求） |
-> |-------------|----------------------|
-> | `./mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg` | `https://img.nga.cn/attachments/mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg` |
-> | `.1/xxx.jpg`（数字目录） | 可能走 `urlReplace` 版本替换 |
->
-> 同时 `attach.check(arg.i, src)` 会验证附件表里是否有这条记录（决定走缩略图还是原图）。
+> 参数固定是 `=video`（不是宽高！）
 
 ```
-[img]./mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg[/img]
-
-[img-1]./mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img]
+[flash=video]https://example.com/video.swf[/flash]
 ```
 
-### Flash / Media 视频
+### 多媒体（音频/视频）
 
-> 官方统一正则 `\[(flash|media)(?:=(video|audio))?\]...\[/\1\]`
-> 参数只能是 `=video` 或 `=audio`（或省略），然后内部按 URL 域名匹配具体播放器
-> 支持的视频源：bilibili / b23.tv / youku / acfun / 腾讯视频 / 乐视 / pptv / 163 / 战旗直播 / 火猫直播 等
+> 参数固定是 `=audio` 或 `=video`
 
 ```
-[flash=video]https://www.bilibili.com/video/BV1Zb4y1q7j3[/flash]
-[flash]https://b23.tv/eVBgYQM[/flash]
-[media=video]https://www.bilibili.com/video/av170001[/media]
-[media]https://live.bilibili.com/live/123456[/media]
+[media=audio]https://example.com/music.mp3[/media]
+[media=video]https://example.com/player.html[/media]
 ```
 
 ### Iframe 嵌入
 
-> 参数 `=宽,高`，逗号分隔；等号可选；**开/闭标签都不带参数**（闭标签永远是 `[/iframe]`）
-> ⚠️ 有 `checkIframeTable` **host 白名单机制**：
-> - 白名单内的 host → 直接渲染 `<iframe>`
-> - 白名单外的 host → 渲染成"点击显示页面"按钮（manual load，需用户点击才加载）
->
-> 白名单由运行时 `commonui.checkIframeTable` 注入，通常包含 NGA 内部工具页
+> 参数是 `=宽,高`，逗号分隔，等号可选
 
 ```
-[iframe=800,600]https://gfl-pick.pages.dev[/iframe]
+[iframe=500,300]https://example.com/embed[/iframe]
 ```
 
 ### 相册
 
 ```
 [album]相册标题[/album]
-[album=相册标题]https://img.nga.cn/attachments/mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg https://img.nga.cn/attachments/mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/album]
+[album=相册标题]http://img1.jpg http://img2.jpg http://img3.jpg[/album]
 ```
 
 ---
@@ -450,6 +381,12 @@ def hello():
 [h]这是小标题[/h]
 ```
 
+### 处罚遮罩
+
+```
+[lessernuke]这行内容会被遮罩[/lessernuke]
+```
+
 ### 附件
 
 ```
@@ -464,31 +401,72 @@ def hello():
 
 ---
 
+## 版头与高级布局
+
+> 这些标签主要用于版头（版面公告），普通帖子里可能不生效。
+
+### 固定尺寸容器
+
+```
+[fixsize height 60 width 500]
+这是固定宽高的容器
+[/fixsize]
+
+[fixsize height 40 width 400 maxW 500 background red]
+带背景色的容器
+[/fixsize]
+```
+
+### 样式容器
+
+```
+[style width 500 height 80 background #333 color #fff padding 10 border 1px solid #666]
+自定义样式区域
+[/style]
+```
+
+### 自动适应父元素宽度
+
+```
+[parentfitwidth]宽度自动跟随父元素[/parentfitwidth]
+```
+
+### 贴底对齐
+
+```
+[aligntobottom]这行文字会贴着容器底部[/aligntobottom]
+```
+
+### 向上延伸
+
+```
+[extendtop 200]从上方延伸 200px 的元素[/extendtop]
+```
+
+---
+
 ## 全标签大全（一键复制）
 
 > 下面这段包含了以上所有标签的示例，可以直接复制到论坛发帖框查看渲染效果。
-> 部分标签（`[crypt]` 加密、`[dice]` 骰子等）需要后端/特定上下文才会触发。
-> `[iframe]` 需要白名单 host 才渲染。
+> 部分标签（版头专用、加密、骰子等）可能需要特定上下文才会触发。
 
 ```
 [b]加粗[/b] [i]斜体[/i] [u]下划线[/u] [del]删除线[/del] [sup]上标[/sup] [sub]下标[/sub]
 
-[color=red]红[/color] [color=blue]蓝[/color] [color=green]绿[/color] [color=purple]紫[/color] [color=bgred]红底白字[/color]
+[color=red]红[/color] [color=blue]蓝[/color] [color=green]绿[/color] [color=bgred]红底白字[/color]
 
-[size=150]大字号[/size] [size=50]小字号[/size]
-
-[font=simsun]宋体[/font] [font=simhei]黑体[/font] [font=Arial]Arial[/font] [font=Georgia]Georgia[/font]
+[size=150]大字号[/size] [font=微软雅黑]微软雅黑[/font]
 
 [align=center]居中对齐[/align]
 
-[url=https://www.nga.cn]NGA 论坛[/url]
+[url=https://www.nga.cn]NGA[/url]
 [tid=12345678]主题标题[/tid]
 [pid=98765432,5]回复标题[/pid]
 [fid=4]魔兽世界[/fid]
 [uid=123456]用户名[/uid]
 [@用户名]
 
-[quote]引用块内容[/quote]
+[quote]引用块[/quote]
 
 [list]
 [*]无序 1
@@ -514,17 +492,14 @@ def hello():
 [/tr]
 [/table]
 
-[img]https://img.nga.cn/attachments/mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg[/img]
-[img-1]https://img.nga.cn/attachments/mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img]
+[img]https://img4.nga.178.com/ngaweb/photo/2024/1201/abc123.jpg[/img]
+[img-1]https://img4.nga.178.com/ngaweb/photo/2024/1201/abc123.jpg[/img]
+[iframe=500,300]https://example.com/embed[/iframe]
+[media=audio]https://example.com/music.mp3[/media]
+[media=video]https://example.com/player.html[/media]
+[album=相册标题]http://img1.jpg http://img2.jpg[/album]
 
-[img]./mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg[/img]
-[img-1]./mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img]
-
-[flash=video]https://www.bilibili.com/video/BV1Zb4y1q7j3[/flash]
-
-[iframe=800,600]https://gfl-pick.pages.dev[/iframe]
-
-[collapse=点击展开]隐藏的折叠内容[/collapse]
+[collapse=折叠标题]隐藏内容[/collapse]
 
 [code]
 var x = 1;
@@ -539,54 +514,18 @@ function hello() { return "world"; }
 [dice]3d6[/dice]
 
 [h]小标题[/h]
+
+[lessernuke]被遮罩的内容[/lessernuke]
 ```
 
 ---
 
-## 备注与已知限制
+## 备注
 
-### 参数规则（按官方 `bbscode.js` 正则）
-
-| 模式 | 合法示例 | 说明 |
-|------|---------|------|
-| 必须有等号 | `[color=red]` `[size=150]` `[url=xxx]` | color 等，等号不可省略 |
-| 必须无等号 | `[img-1]` `[img123]` | img 直接跟数字，等号会报错 |
-| 等号可选 | `[tid123]` `[tid=123]` / `[td width80]` `[td width=80]` | tid/pid/fid/stid + td/tr/table 的大部分属性 |
-| 固定值白名单 | `[color=red]` / `[font=Arial]` | 颜色 25 种、字体 17 种，超范围渲染为 error 注释 |
-| 固定参数值 | `[flash=video]` / `[media=audio]` | 只能是 video 或 audio |
-| 固定单字符 | `[list=1]` | 等号 + 单个字符（列表序号类型） |
-
-### 标签闭合规则
-
-> ⚠️ **重要**：BBCode 闭标签格式永远是 `[/tagname]`，**不带参数**！即使开标签带了参数，闭标签也不变。
->
-> | 开标签 | 正确闭标签 | 错误闭标签 |
-> |--------|-----------|-----------|
-> | `[img-1]` | `[/img]` ✅ | `[/img-1]` ❌ |
-> | `[img123]` | `[/img]` ✅ | `[/img123]` ❌ |
-> | `[color=red]` | `[/color]` ✅ | — |
-> | `[iframe=500,300]` | `[/iframe]` ✅ | — |
-
-### 渲染外部依赖
-
-- **iframe**：有 `checkIframeTable` host 白名单，不在白名单的 host → 渲染成"点击显示页面"按钮
-- **flash/media**：内部按 URL 域名匹配特定视频播放器（bilibili/youku/腾讯视频等），普通 mp3/mp4 链接不会自动播放
-- **crypt**：需要客户端/后端配合解密，纯前端 BBCode 渲染不会自动解开
-- **dice**：需要后端或客户端 JS 执行骰子逻辑
-
-### 非用户标签
-
-以下标签**不能手动使用**，由后端/客户端自动插入：
-- `[lessernuke]` — 处罚遮罩（后端在 `arg.isNukePost` 时自动注入）
-- `[urlreplace]` — 版本兼容替换规则（后端预处理）
-- `[comment]` — 注释标签（渲染前被 `secureText` 移除）
-
-### 参考来源
-
-- `NGA-OFFICIAL-JS/data/bbscode.js` （主替换链 + 参数正则）
-- `NGA-OFFICIAL-JS/data/bbscodeSpec.js`（尺寸容器）
-- `NGA-OFFICIAL-JS/data/bbscodeMd.js` （md→bb 预处理）
-- 字体白名单：`bbscode.js` 行 3351
-- 颜色白名单：`bbscode.js` 行 3339
-- flash/media 域名匹配：`bbscode.js` 行 3656-3681
-- iframe host 白名单：`bbscode.js` 行 756 + `commonui.checkIframeTable`
+- 颜色参数必须带等号：`[color=red]` ✅ / `[color red]` ❌
+- 图片参数不带等号：`[img-1]` ✅ / `[img=-1]` ❌
+- `td width` / `table width` 等号可选：`[td width80]` / `[td width=80]` 都合法
+- `tid` / `pid` 等号可选：`[tid123]` / `[tid=123]` 都合法
+- `flash` / `media` 参数是 `=video` / `=audio`，不是宽高
+- 版头相关标签（`fixsize` / `style` 等）仅在 `isBlock && opt & 1` 场合生效，普通帖子可能不渲染
+- 参考来源：`NGA-OFFICIAL-JS/data/bbscode.js`、`bbscodeSpec.js`、`bbscodeMd.js`
