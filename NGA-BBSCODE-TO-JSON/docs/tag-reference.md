@@ -626,8 +626,8 @@ seed = (seed × 9301 + 49297) mod 233280
 | `float` | 1 | `left` / `right` | 浮动 | `s.float = z` |
 | `clear` | 1 | `both` | 清除浮动 | `s.clear = 'both'` |
 | `align` | 1 | `center` / `left` / `right` / `justify-all` | 对齐 | `s.text-align = z` |
-| `color` | 1 | `#HEX` | 文字颜色 | `s.color = z` |
-| `background` | 1 | `#HEX` | 背景色 | `s.background = z` |
+| `color` | 1 | **只接受** `#HEX`（3-6 位） | 文字颜色，不接受颜色名（与 `[color=red]` 相反） | `s.color = z` |
+| `background` | 1 | **只接受** `#HEX`（3-6 位） | 背景色，不接受颜色名/颜色关键字 | `s.background = z` |
 | `background-repeat` | 1 | `0` / `1` | 是否平铺 | `s['background-repeat'] = z ? 'repeat' : 'no-repeat'` |
 | `font` | 2 | 数字 + HEX + 可选 `serif` | 字号 + 颜色 + 字体族 | 复杂处理 |
 | `rotate` | 1 | 数字 | CSS rotate（度） | `transform: rotate(z+'deg')` |
@@ -659,6 +659,25 @@ token 列表按空格（和逗号）切分后，**遇到已知 key 就切换当�
     extendtop = "1"
     src = "./mon.webp"
 ```
+
+#### 重要限制（官方设计）
+
+> ⚠️ **`[style]` 和 `[fixsize]` 是版头专属标签**，普通帖子/回复里**完全不会被官方渲染器处理**：
+>
+> 1. **必须在版头上下文**：官方 JS 里 `parseFix()` 只在 `arg.isBlock && (arg.opt & 1)` 条件下调用（`bbscode.js` 行 886-887），普通帖子 `isBlock=false` 直接跳过
+> 2. **必须嵌套在 `[fixsize]` 容器内**：`parseFix` 开头先用 fixsize 正则生成包装 div，**匹配失败直接 `return`**（行 1507-1508），后续 style 正则根本不会被执行
+> 3. **不在通用 BBCode 正则链里**：style/fixsize 不出现在行 2365 的主 replace 正则中，即使 parseFix 没跑也没有兜底替换
+>
+> 换句话说——普通帖子里写的 `[style color #ff8000]abc[/style]`，最终 HTML 里原样保留了标签但没有任何样式效果。
+>
+> **正确用法**（版头内）：
+> ```bbcode
+> [fixsize height 19.3 width 60 153 background transparent transparent]
+>   [style left 0.3 top 0 width 19]
+>     [style color #ff8000]abcde[/style]
+>   [/style]
+> [/fixsize]
+> ```
 
 #### 渲染行为
 
