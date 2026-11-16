@@ -297,6 +297,37 @@
 [img-1]https://img.nga.cn/attachments/mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img]
 ```
 
+### 相对路径图片（附件上传自动生成）
+
+> NGA 论坛附件上传后，BBCode 里的图片地址通常是**相对路径**，以 `./` 开头。
+> 官方 `imgGen`（行 1948-1953）会自动把相对路径转成完整 URL：
+>
+> ```javascript
+> // src 以 '.' 开头时
+> if(src.charAt(0)=='.'){
+>     src = src.replace(/^\.(\d+)?\//, function(a,b){
+>         // 数字目录（版本替换）→ arg.urlReplace[b-1]
+>         // 普通 ./mon_xxx/xxx → commonui.getAttachBase(src)
+>         return commonui.getAttachBase(src)+'/';
+>     })
+> }
+> // 非 http(s) 开头 → 补 https://
+> if(!src.match(/^https?:\/\//)) src = 'https://'+src;
+> ```
+>
+> | 相对路径写法 | 转换后（实际浏览器请求） |
+> |-------------|----------------------|
+> | `./mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg` | `https://img.nga.cn/attachments/mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg` |
+> | `.1/xxx.jpg`（数字目录） | 可能走 `urlReplace` 版本替换 |
+>
+> 同时 `attach.check(arg.i, src)` 会验证附件表里是否有这条记录（决定走缩略图还是原图）。
+
+```
+[img]./mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg[/img]
+
+[img-1]./mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img]
+```
+
 ### Flash / Media 视频
 
 > 官方统一正则 `\[(flash|media)(?:=(video|audio))?\]...\[/\1\]`
@@ -485,6 +516,9 @@ def hello():
 
 [img]https://img.nga.cn/attachments/mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg[/img]
 [img-1]https://img.nga.cn/attachments/mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img]
+
+[img]./mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg[/img]
+[img-1]./mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img]
 
 [flash=video]https://www.bilibili.com/video/BV1Zb4y1q7j3[/flash]
 
