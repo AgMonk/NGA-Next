@@ -285,16 +285,16 @@
 
 ## 媒体
 
-### 图片（官方正则 `\[img(-?\d{0,3})\]`）
+### 图片（官方正则 `\[img(-?\d{0,3})\]...\[/img\]`）
 
-> ⚠️ 参数直接跟标签名，**不带等号**！`[img-1]` `[img]` `[img123]` 都合法
+> ⚠️ **开标签**参数直接跟标签名、不带等号；但**闭标签永远是 `[/img]`！**
+> 正确写法：`[img-1]url[/img]` ✅
+> 错误写法：`[img-1]url[/img-1]` ❌ 闭标签带参数会匹配失败
 
 ```
 [img]https://img.nga.cn/attachments/mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg[/img]
 
-[img-1]https://img.nga.cn/attachments/mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img-1]
-
-[img123]https://img.nga.cn/attachments/mon_202605/04/nqQ2x-1b42K1qT3cSsg-fh.jpg[/img123]
+[img-1]https://img.nga.cn/attachments/mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img]
 ```
 
 ### Flash / Media 视频
@@ -312,9 +312,12 @@
 
 ### Iframe 嵌入
 
-> 参数 `=宽,高`，逗号分隔
-> ⚠️ 有 host 白名单机制（`checkIframeTable`），`example.com` 等普通域名**不会渲染**
-> 只有白名单内的 host（主要是内部工具页）才能正常嵌入
+> 参数 `=宽,高`，逗号分隔；等号可选；**开/闭标签都不带参数**（闭标签永远是 `[/iframe]`）
+> ⚠️ 有 `checkIframeTable` **host 白名单机制**：
+> - 白名单内的 host → 直接渲染 `<iframe>`
+> - 白名单外的 host → 渲染成"点击显示页面"按钮（manual load，需用户点击才加载）
+>
+> 白名单由运行时 `commonui.checkIframeTable` 注入，通常包含 NGA 内部工具页
 
 ```
 [iframe=800,600]https://gfl-pick.pages.dev[/iframe]
@@ -481,7 +484,7 @@ def hello():
 [/table]
 
 [img]https://img.nga.cn/attachments/mon_202611/14/-bqqbQ39-fpquKzT3cSsg-iy.jpg[/img]
-[img-1]https://img.nga.cn/attachments/mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img-1]
+[img-1]https://img.nga.cn/attachments/mon_202607/21/-bqqbQ40-40jvK11T1kScb-am.jpg[/img]
 
 [flash=video]https://www.bilibili.com/video/BV1Zb4y1q7j3[/flash]
 
@@ -519,10 +522,21 @@ function hello() { return "world"; }
 | 固定参数值 | `[flash=video]` / `[media=audio]` | 只能是 video 或 audio |
 | 固定单字符 | `[list=1]` | 等号 + 单个字符（列表序号类型） |
 
+### 标签闭合规则
+
+> ⚠️ **重要**：BBCode 闭标签格式永远是 `[/tagname]`，**不带参数**！即使开标签带了参数，闭标签也不变。
+>
+> | 开标签 | 正确闭标签 | 错误闭标签 |
+> |--------|-----------|-----------|
+> | `[img-1]` | `[/img]` ✅ | `[/img-1]` ❌ |
+> | `[img123]` | `[/img]` ✅ | `[/img123]` ❌ |
+> | `[color=red]` | `[/color]` ✅ | — |
+> | `[iframe=500,300]` | `[/iframe]` ✅ | — |
+
 ### 渲染外部依赖
 
-- **iframe**：有 `checkIframeTable` host 白名单（运行时由 `commonui` 注入），非白名单 host 不渲染
-- **flash/media**：内部按 URL 域名匹配特定视频播放器（bilibili/youku/腾讯视频等），普通 mp3 链接不会自动播放
+- **iframe**：有 `checkIframeTable` host 白名单，不在白名单的 host → 渲染成"点击显示页面"按钮
+- **flash/media**：内部按 URL 域名匹配特定视频播放器（bilibili/youku/腾讯视频等），普通 mp3/mp4 链接不会自动播放
 - **crypt**：需要客户端/后端配合解密，纯前端 BBCode 渲染不会自动解开
 - **dice**：需要后端或客户端 JS 执行骰子逻辑
 
